@@ -1,0 +1,11 @@
+<launch>
+    <!-- Launch sensor_node.py -->
+    <node pkg="alche_srbl" type="sensor_node.py" name="sensor_srbl" output="screen">
+        <param name="use_sim_time" value="false"/>
+    </node>
+
+    <!-- Launch sensor_3dplot.py -->
+    <node pkg="alche_srbl" type="sensor_3dplot.py" name="sensor_3dplotter" output="screen">
+        <param name="use_sim_time" value="false"/>
+    </node>
+</launch>
