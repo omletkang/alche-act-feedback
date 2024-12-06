@@ -39,20 +39,32 @@ class RealTimePlotter:
         self.win.resize(800, 600)
         self.win.setWindowTitle("Real-time Sensor Force Data Plot")
 
+        # Customize font size
+        title_font = {'size': '20pt'}  # Title font size
+        axis_label_font = {'font-size': '20pt'}  # Axis label font size
+        legend_font = {'size': '14pt'}  # Legend font size
+
         # Create upper and lower subplots for the two sensor groups
         self.plot1 = self.win.addPlot(title="Sensor Force Data - Right")
-        self.plot2 = self.win.addPlot(title="Sensor Force Data - left", row=1, col=0)
+        self.plot2 = self.win.addPlot(title="Sensor Force Data - Left", row=1, col=0)
 
-        # Configure plots
+        # Configure plot titles
+        self.plot1.setTitle("Sensor Force Data - Right", **title_font)
+        self.plot2.setTitle("Sensor Force Data - Left", **title_font)
+
+        # Configure axis labels
         for plot in [self.plot1, self.plot2]:
-            plot.showGrid(x=True, y=True)
-            plot.setLabel('left', 'Sensor Force Data')
-            plot.setLabel('bottom', 'Time', units='s')
-            plot.setYRange(-30, 30) # Set y-axis range
-            plot.addLegend()
+            plot.showGrid(x=True, y=True)  # Enable grid lines
+            plot.setLabel('left', 'Sensor Force (N)', **axis_label_font)
+            plot.setLabel('bottom', 'Time (s)', **axis_label_font)
+            plot.setYRange(-30, 30)  # Set y-axis range
+
+            # Add legend
+            legend = plot.addLegend()
+            legend.setLabelTextSize(legend_font['size'])  # Apply legend font size
 
         # Initialize data buffers and curves for 3 lines in each plot
-        self.update_rate = 18  # Update plot at 50 Hz
+        self.update_rate = 18  # Update plot at ~18 Hz
         self.time_window = 10  # Display last 10 seconds
         self.num_points = self.update_rate * self.time_window  # Total points in buffer
 
@@ -62,8 +74,8 @@ class RealTimePlotter:
 
         colors = ['r', 'g', 'b']
         labels = ['Fx', 'Fy', 'Fz']
-        self.curves_R = [self.plot1.plot(pen=pg.mkPen(colors[i], width=2), name=labels[i]) for i in range(3)]
-        self.curves_L = [self.plot2.plot(pen=pg.mkPen(colors[i], width=2), name=labels[i]) for i in range(3)]
+        self.curves_R = [self.plot1.plot(pen=pg.mkPen(colors[i], width=3.5), name=labels[i]) for i in range(3)]
+        self.curves_L = [self.plot2.plot(pen=pg.mkPen(colors[i], width=3.5), name=labels[i]) for i in range(3)]
 
         # Track start time for dynamic x-axis
         self.start_time = time.time()
@@ -89,8 +101,8 @@ class RealTimePlotter:
             # Update force buffers
             self.force_buffer_R = np.roll(self.force_buffer_R, -1, axis=1)
             self.force_buffer_L = np.roll(self.force_buffer_L, -1, axis=1)
-            self.force_buffer_R[:, -1] = [force_R1, -1 * force_R2, -1 * force_R3] # -1 for direction
-            self.force_buffer_L[:, -1] = [force_L1, -1 * force_L2, -1 * force_L3] # -1 for direction
+            self.force_buffer_R[:, -1] = [force_R1, -1 * force_R2, -1 * force_R3]  # -1 for direction
+            self.force_buffer_L[:, -1] = [force_L1, -1 * force_L2, -1 * force_L3]  # -1 for direction
 
         # Calculate elapsed time for dynamic x-axis
         current_time = time.time() - self.start_time
@@ -105,6 +117,7 @@ class RealTimePlotter:
         """Run the Qt application loop."""
         rospy.loginfo("Starting real-time 2D plotter...")
         sys.exit(self.app.exec_())
+
 
 if __name__ == '__main__':
     try:
