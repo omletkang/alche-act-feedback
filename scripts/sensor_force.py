@@ -4,9 +4,24 @@ import rospy
 from std_msgs.msg import Float32MultiArray
 import numpy as np
 import threading
-import rospkg
-from tensorflow.keras.models import load_model
+# import rospkg
+import torch
+import torch.nn as nn
 import joblib
+
+# Define the MLP model class to match the saved models
+class MLPModel(nn.Module):
+    def __init__(self):
+        super(MLPModel, self).__init__()
+        self.fc1 = nn.Linear(4, 32)
+        self.fc2 = nn.Linear(32, 16)
+        self.fc3 = nn.Linear(16, 3)
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
 
 class SensorForcePublisherNode:
     def __init__(self):
@@ -19,20 +34,25 @@ class SensorForcePublisherNode:
         self.latest_data = None  # Store the most recent data for prediction
 
         # Load models and scalers
-        rospack = rospkg.RosPack()
-        package_path = rospack.get_path('alche_srbl')  # Replace with your package name if necessary
+        # rospack = rospkg.RosPack()
+        # package_path = rospack.get_path('alche_srbl')  # Replace with your package name if necessary
 
-        model_path = f"{package_path}/sensor_calibration/mlp_model_1.h5"
-        scaler_path = f"{package_path}/sensor_calibration/scaler_1.pkl"
-        self.model_1 = load_model(model_path)
-        self.scaler_1 = joblib.load(scaler_path)
+        # sensor_cal_torch_path = f"{package_path}/sensor_cal_torch"
+        sensor_cal_torch_path = "../sensor_cal_torch"
+        self.model_1 = self.load_model(f"{sensor_cal_torch_path}/mlp_model_1.pth")
+        self.scaler_1 = joblib.load(f"{sensor_cal_torch_path}/scaler_1.pkl")
 
-        model_path = f"{package_path}/sensor_calibration/mlp_model_2.h5"
-        scaler_path = f"{package_path}/sensor_calibration/scaler_2.pkl"
-        self.model_2 = load_model(model_path)
-        self.scaler_2 = joblib.load(scaler_path)
+        self.model_2 = self.load_model(f"{sensor_cal_torch_path}/mlp_model_2.pth")
+        self.scaler_2 = joblib.load(f"{sensor_cal_torch_path}/scaler_2.pkl")
 
         rospy.loginfo("SensorForcePublisherNode initialized and ready.")
+
+    def load_model(self, model_path):
+        # Load the model structure and weights
+        model = MLPModel()
+        model.load_state_dict(torch.load(model_path))
+        model.eval()  # Set model to evaluation mode
+        return model
 
     def callback(self, msg):
         with self.data_lock:
@@ -47,11 +67,13 @@ class SensorForcePublisherNode:
         # Predict forces using models
         hall_sensor_values_R = data[0:4].reshape(1, -1)  # Extract right-hand sensor values
         hall_sensor_values_R_scaled = self.scaler_1.transform(hall_sensor_values_R)
-        force_vector_R = self.model_1.predict(hall_sensor_values_R_scaled)
+        hall_sensor_values_R_tensor = torch.tensor(hall_sensor_values_R_scaled, dtype=torch.float32)
+        force_vector_R = self.model_1(hall_sensor_values_R_tensor).detach().numpy()
 
         hall_sensor_values_L = data[4:8].reshape(1, -1)  # Extract left-hand sensor values
         hall_sensor_values_L_scaled = self.scaler_2.transform(hall_sensor_values_L)
-        force_vector_L = self.model_2.predict(hall_sensor_values_L_scaled)
+        hall_sensor_values_L_tensor = torch.tensor(hall_sensor_values_L_scaled, dtype=torch.float32)
+        force_vector_L = self.model_2(hall_sensor_values_L_tensor).detach().numpy()
 
         # Extract individual components (ensure compatibility with ROS message)
         force_R1, force_R2, force_R3 = force_vector_R[0]
@@ -64,6 +86,7 @@ class SensorForcePublisherNode:
         rate = rospy.Rate(30)  # 30 Hz publishing loop
         while not rospy.is_shutdown():
             sensor_force = self.predict_force()
+            # print(sensor_force)
             if sensor_force is not None:
                 self.publish_force(sensor_force)
             rate.sleep()
@@ -73,7 +96,6 @@ class SensorForcePublisherNode:
         msg = Float32MultiArray()
         msg.data = sensor_force
         self.pub.publish(msg)
-        # rospy.loginfo("Published sensor_force: %s", sensor_force)
         rospy.loginfo_throttle(0.1, "Published sensor_force: %s", sensor_force)
 
 if __name__ == '__main__':
