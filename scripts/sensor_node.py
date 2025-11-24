@@ -28,8 +28,9 @@ class SRBLSensorNode:
             
             sensor1, sensor2 = self.finger_sensor.split_read() # Read np.ndarray data from the FingerSensor
 
-            sensor_msg = Float32MultiArray()
             combined_data = list(sensor1) + list(sensor2)  # Concatenate sensor1 and sensor2 into one list
+            rospy.loginfo(f"Publishing sensor_data: {combined_data}")
+            sensor_msg = Float32MultiArray()
             sensor_msg.data = combined_data
 
             self.sensor_pub.publish(sensor_msg)

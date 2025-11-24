@@ -38,7 +38,7 @@ class SensorForcePublisherNode:
         # package_path = rospack.get_path('alche_srbl')  # Replace with your package name if necessary
 
         # sensor_cal_torch_path = f"{package_path}/sensor_cal_torch"
-        sensor_cal_torch_path = "../sensor_cal_torch"
+        sensor_cal_torch_path = "../sensor_cal_torch2"
         self.model_1 = self.load_model(f"{sensor_cal_torch_path}/mlp_model_1.pth")
         self.scaler_1 = joblib.load(f"{sensor_cal_torch_path}/scaler_1.pkl")
 

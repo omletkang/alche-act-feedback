@@ -7,8 +7,10 @@ import torch.nn as nn
 import torch.optim as optim
 import joblib
 
+file_num = 2 # Change your file number
+
 # Load the data from CSV
-filename = 'sensor_data_log_1.csv'  # Replace with your file path
+filename = f'sensor_data_log_{file_num}.csv'  # Replace with your file path
 data = pd.read_csv(filename)
 
 # Extract input (H_matrix) and output (F_matrix)
@@ -24,7 +26,7 @@ H_train = scaler.fit_transform(H_train)
 H_test = scaler.transform(H_test)
 
 # Save the scaler for later use
-scaler_filename = 'scaler_1.pkl'  # Replace with your file path
+scaler_filename = f'scaler_{file_num}.pkl'  # Replace with your file path
 joblib.dump(scaler, scaler_filename)
 
 # Convert data to PyTorch tensors
@@ -83,4 +85,4 @@ with torch.no_grad():
 print(f"Test MSE: {test_loss.item():.4f}")
 
 # Save the trained model
-torch.save(model.state_dict(), 'mlp_model_1.pth')  # Replace with your file path
+torch.save(model.state_dict(), f'mlp_model_{file_num}.pth')  # Replace with your file path
