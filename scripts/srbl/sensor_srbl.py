@@ -56,8 +56,9 @@ class FingerSensor:
         values = np.array(data.split(','), dtype=float)  # Use NumPy array and convert to float
         adjusted_values = values - self.offsets
  
-        sensor1 = -1 * adjusted_values[[0, 2, 4, 6]]  # Select values for sensor1
-        sensor2 = -1 * adjusted_values[[1, 3, 5, 7]]  # Select values for sensor2
+        # -1 * for sensor v1, 1 * for sensor v8
+        sensor1 = adjusted_values[[0, 2, 4, 6]]  # (-1) Select values for sensor1
+        sensor2 = adjusted_values[[1, 3, 5, 7]]  # (-1) Select values for sensor2
         return sensor1, sensor2
 
     
