@@ -8,7 +8,7 @@ The resulting sensor NN model converts the raw sensor signals into 3-axis force 
 
 ## Workflow
 
-1. **Collect data**: record the raw 3-axis sensor signals together with the load cell's ground-truth force.
+1. **Collect data**: record the raw 3-axis sensor signals together with the load cell's ground-truth force. The load cell driver and logger are in [rft-sensor-ros](https://github.com/omletkang/rft-sensor-ros).
 2. **Calibrate**: train an MLP (4 sensor inputs → 3-axis force) on the recorded CSV logs.
 3. **Use the model**: run the trained model in ROS to publish calibrated force in real time.
 
